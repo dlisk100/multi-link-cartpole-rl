@@ -56,6 +56,12 @@ def load_single_link_experiment_config(config_path: str | Path) -> SingleLinkExp
         initial_state_noise=float(
             data.get("initial_state_noise", default_env.initial_state_noise)
         ),
+        swingup_initial_angle_center=float(
+            data.get(
+                "swingup_initial_angle_center",
+                default_env.swingup_initial_angle_center,
+            )
+        ),
         swingup_initial_angle_noise=float(
             data.get(
                 "swingup_initial_angle_noise",

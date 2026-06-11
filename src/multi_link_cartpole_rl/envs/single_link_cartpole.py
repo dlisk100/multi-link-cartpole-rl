@@ -46,6 +46,7 @@ class SingleLinkCartPoleConfig:
     pole_half_length: float = 0.5
     time_step: float = 0.02
     initial_state_noise: float = 0.05
+    swingup_initial_angle_center: float = pi
     swingup_initial_angle_noise: float = 0.05
     swingup_initial_velocity_noise: float = 0.05
     upright_angle_threshold: float = 12.0 * 2.0 * pi / 360.0
@@ -151,8 +152,14 @@ class SingleLinkCartPoleEnv(gym.Env):
             self.state = state
             self._update_upright_metrics()
         elif self.config.task == "swing_up":
-            angle_low = pi - self.config.swingup_initial_angle_noise
-            angle_high = pi + self.config.swingup_initial_angle_noise
+            angle_low = (
+                self.config.swingup_initial_angle_center
+                - self.config.swingup_initial_angle_noise
+            )
+            angle_high = (
+                self.config.swingup_initial_angle_center
+                + self.config.swingup_initial_angle_noise
+            )
             velocity_noise = self.config.swingup_initial_velocity_noise
             self.state = np.array(
                 [
@@ -319,10 +326,17 @@ class SingleLinkCartPoleEnv(gym.Env):
         x, x_dot, theta, theta_dot = self.state
         angle_error = self._angle_error_radians()
         upright_score = (cos(angle_error) + 1.0) / 2.0
+        upright_region_score = exp(-((angle_error / 1.0) ** 2))
         settled_score = upright_score
         settled_score *= exp(-((angle_error / self.config.upright_angle_threshold) ** 2))
         settled_score *= exp(
-            -((float(theta_dot) / self.config.upright_angular_velocity_threshold) ** 2)
+            -(
+                (
+                    float(theta_dot)
+                    / self.config.upright_angular_velocity_threshold
+                )
+                ** 2
+            )
         )
         consecutive_bonus = min(
             self.upright_steps / max(self.config.swingup_success_steps, 1),
@@ -337,6 +351,7 @@ class SingleLinkCartPoleEnv(gym.Env):
         reward += 2.0 * consecutive_bonus
         reward -= 0.1 * position_fraction**2
         reward -= 0.01 * velocity_fraction**2
+        reward -= 0.08 * upright_region_score * float(theta_dot) ** 2
         reward -= 0.005 * force_fraction**2
 
         if self._is_upright():
@@ -344,7 +359,7 @@ class SingleLinkCartPoleEnv(gym.Env):
         if self.upright_steps >= self.config.swingup_success_steps:
             reward += 5.0
         if terminated:
-            reward -= 10.0
+            reward -= 50.0
 
         return float(reward)
 

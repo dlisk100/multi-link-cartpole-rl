@@ -70,6 +70,8 @@ def test_cli_parsers_accept_milestone_1b_arguments() -> None:
             "models/test.zip",
             "--run-dir",
             "runs/test",
+            "--resume-from",
+            "models/previous.zip",
         ]
     )
     evaluate_args = build_evaluate_parser().parse_args(
@@ -99,6 +101,7 @@ def test_cli_parsers_accept_milestone_1b_arguments() -> None:
 
     assert train_args.seed == 1
     assert train_args.total_timesteps == 8
+    assert train_args.resume_from == "models/previous.zip"
     assert evaluate_args.episodes == 3
     assert evaluate_args.seed == 2
     assert render_args.steps == 4

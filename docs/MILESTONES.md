@@ -108,11 +108,15 @@ metrics, and why swing-up is harder than upright stabilization.
 
 Files likely touched: `src/multi_link_cartpole_rl/envs/single_link_cartpole.py`,
 `src/multi_link_cartpole_rl/training/evaluate_policy.py`,
-`configs/single_link_swingup.yaml`, `tests/`, `README.md`.
+`configs/single_link_swingup.yaml`, `configs/single_link_swingup_upright_curriculum.yaml`,
+`tests/`, `README.md`.
 
-Done means: The stabilization baseline still passes, swing-up starts near downward,
-evaluation reports success rate and consecutive upright steps, and PPO can solve the
-single-link swing-up task by the documented criteria.
+Implementation done means: The stabilization baseline still passes, swing-up starts near
+downward, evaluation reports success rate and consecutive upright steps, and plotting/reporting
+works for the swing-up run.
+
+Solved means: PPO reaches the 1000-step cap or near it over 20 seeded episodes,
+`swingup_success_rate >= 0.9`, and mean max consecutive upright steps is at least 300.
 
 How to validate:
 
@@ -120,6 +124,7 @@ How to validate:
 uv run pytest
 uv run ruff check .
 uv run python scripts/train.py --config configs/single_link_swingup.yaml --seed 1
+uv run python scripts/train.py --config configs/single_link_swingup_upright_curriculum.yaml --seed 1 --resume-from models/single_link_swingup_ppo.zip
 uv run python scripts/evaluate.py --config configs/single_link_swingup.yaml --model-path models/single_link_swingup_ppo.zip --episodes 20 --seed 1 --output runs/single_link_swingup_ppo/evaluation.json
 uv run python scripts/render_policy.py --config configs/single_link_swingup.yaml --model-path models/single_link_swingup_ppo.zip --seed 1
 ```

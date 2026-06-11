@@ -28,7 +28,9 @@ artifacts ignored, but make the improvement over random policy easy to reproduce
 ## Milestone 1D: Single-Link Swing-Up
 
 Add a downward-start single-link swing-up task. Train PPO to swing the pole upright and
-stabilize it before moving the same idea toward multi-link swing-up.
+stabilize it before moving the same idea toward multi-link swing-up. Track survival,
+success rate, and max consecutive upright steps separately so long episodes do not get
+mistaken for solved swing-up behavior.
 
 ## Milestone 2A: Clean Up Metrics, Logging, And Configs
 

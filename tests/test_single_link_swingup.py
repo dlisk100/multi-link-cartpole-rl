@@ -45,6 +45,21 @@ def test_swingup_reset_starts_near_downward() -> None:
     env.close()
 
 
+def test_swingup_reset_angle_center_is_configurable() -> None:
+    env = make_swingup_env(
+        initial_state_noise=0.0,
+        swingup_initial_angle_center=0.0,
+        swingup_initial_angle_noise=0.01,
+        swingup_initial_velocity_noise=0.0,
+    )
+
+    _, info = env.reset(seed=123)
+
+    assert abs(info["angle_error_radians"]) <= 0.01
+    assert info["is_upright"]
+    env.close()
+
+
 def test_swingup_does_not_terminate_on_pole_angle() -> None:
     env = make_swingup_env()
     env.reset(seed=123, options={"state": np.array([0.0, 0.0, pi, 0.0])})

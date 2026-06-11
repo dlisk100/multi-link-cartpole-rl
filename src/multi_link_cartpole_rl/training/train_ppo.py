@@ -37,6 +37,11 @@ def build_parser() -> ArgumentParser:
         default=None,
         help="Override the Monitor log directory from the config.",
     )
+    parser.add_argument(
+        "--resume-from",
+        default=None,
+        help="Optional PPO checkpoint to continue training from.",
+    )
     return parser
 
 
@@ -47,6 +52,7 @@ def train_ppo(
     total_timesteps: int | None = None,
     model_path: str | None = None,
     run_dir: str | None = None,
+    resume_from: str | None = None,
 ) -> Path:
     """Train PPO and return the saved model path."""
     from stable_baselines3 import PPO
@@ -68,14 +74,25 @@ def train_ppo(
     env.action_space.seed(seed)
     monitored_env = Monitor(env, filename=str(resolved_run_dir / "monitor.csv"))
 
-    model = PPO(
-        "MlpPolicy",
-        monitored_env,
-        seed=seed,
-        verbose=1,
-        **ppo_kwargs(experiment_config),
+    if resume_from is None:
+        model = PPO(
+            "MlpPolicy",
+            monitored_env,
+            seed=seed,
+            verbose=1,
+            **ppo_kwargs(experiment_config),
+        )
+        reset_num_timesteps = True
+    else:
+        model = PPO.load(resume_from, env=monitored_env)
+        model.set_random_seed(seed)
+        model.verbose = 1
+        reset_num_timesteps = False
+
+    model.learn(
+        total_timesteps=resolved_timesteps,
+        reset_num_timesteps=reset_num_timesteps,
     )
-    model.learn(total_timesteps=resolved_timesteps)
     model.save(resolved_model_path)
     monitored_env.close()
 
@@ -91,6 +108,7 @@ def main() -> None:
         total_timesteps=args.total_timesteps,
         model_path=args.model_path,
         run_dir=args.run_dir,
+        resume_from=args.resume_from,
     )
     print(
         "PPO training finished: "

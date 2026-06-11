@@ -134,6 +134,16 @@ Train the swing-up policy:
 uv run python scripts/train.py --config configs/single_link_swingup.yaml --seed 1
 ```
 
+If the policy reaches long episodes but does not hold upright yet, train the same policy
+briefly on near-upright swing-up starts before returning to the downward-start config:
+
+```bash
+uv run python scripts/train.py \
+  --config configs/single_link_swingup_upright_curriculum.yaml \
+  --seed 1 \
+  --resume-from models/single_link_swingup_ppo.zip
+```
+
 Evaluate swing-up success:
 
 ```bash
@@ -161,6 +171,10 @@ uv run python scripts/plot_results.py \
   --run-dir runs/single_link_swingup_ppo \
   --evaluation runs/single_link_swingup_ppo/evaluation.json
 ```
+
+Strict swing-up acceptance is intentionally stronger than survival: over 20 seeded episodes,
+the trained policy should average near the 1000-step cap, reach
+`swingup_success_rate >= 0.9`, and average at least 300 consecutive upright steps.
 
 ## Milestone 2: two-link cartpole
 
