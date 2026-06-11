@@ -24,6 +24,7 @@ cartpole-train = "multi_link_cartpole_rl.training.train_ppo:main"
 cartpole-evaluate = "multi_link_cartpole_rl.training.evaluate_policy:main"
 cartpole-render-policy = "multi_link_cartpole_rl.rendering.render_policy:main"
 cartpole-render-random = "multi_link_cartpole_rl.rendering.render_random:main"
+cartpole-play-manual = "multi_link_cartpole_rl.rendering.play_manual:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

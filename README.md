@@ -21,7 +21,7 @@ large framework.
 ## Learning progression
 
 - [ ] Understand the Gymnasium environment API
-- [ ] Run random actions in a single-link cartpole
+- [x] Run random actions in a single-link cartpole
 - [ ] Train PPO on single-link cartpole
 - [ ] Render a trained single-link policy
 - [ ] Add logging for reward and episode length
@@ -37,6 +37,45 @@ large framework.
 Implement a custom Gymnasium-compatible environment for the standard cart and one pendulum.
 The first goal is not to beat any benchmark. The first goal is to understand the environment
 API, basic dynamics, reward shaping, and how PPO interacts with the environment.
+
+Milestone 1A now includes a minimal environment that can reset, step, return rewards, and run
+random actions. The observation is `[cart_position, cart_velocity, pole_angle,
+pole_angular_velocity]`. The action is one continuous value: horizontal force on the cart.
+
+Try a random episode:
+
+```bash
+uv run python scripts/render_random.py --config configs/single_link.yaml --steps 100 --seed 1
+```
+
+Watch random actions in a graphical window:
+
+```bash
+uv run python scripts/render_random.py --config configs/single_link.yaml --steps 100 --seed 1 --render
+```
+
+Try controlling it yourself:
+
+```bash
+uv run python scripts/play_manual.py --config configs/single_link.yaml --seed 1
+```
+
+Manual play defaults to `learning` difficulty, which uses a wider pole-angle limit so you can
+build intuition before trying the strict CartPole-style setting.
+
+To try the stricter version:
+
+```bash
+uv run python scripts/play_manual.py --config configs/single_link.yaml --seed 1 --difficulty classic
+```
+
+Manual controls:
+
+- Hold `Left`/`A` to push left
+- Hold `Right`/`D` to push right
+- Press `Space` to release force
+- Press `R` to reset
+- Press `Q` to quit
 
 ## Milestone 2: two-link cartpole
 
@@ -61,7 +100,8 @@ important.
 
 ## Environment design notes
 
-The initial environment files are placeholders. The intended direction is:
+The single-link environment now implements the basic Gymnasium API. The multi-link
+environment is still a placeholder. The intended direction is:
 
 - Use the Gymnasium API: `reset`, `step`, `render`, `close`, `observation_space`, and
   `action_space`.
@@ -83,5 +123,7 @@ training. Later milestones will render trained policies and save videos or GIFs 
 
 ## Current status
 
-Initial scaffold only. The project imports cleanly, but the cartpole physics and Gymnasium
-environment are intentionally not implemented yet.
+Milestone 1A is complete. The project now has a minimal single-link Gymnasium environment
+with continuous cart-force actions, simple cartpole dynamics, shaped rewards, and a
+random-action runner. Graphical rendering, PPO training, and multi-link dynamics are still
+future milestones.
