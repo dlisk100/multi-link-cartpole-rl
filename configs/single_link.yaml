@@ -4,4 +4,11 @@ max_episode_steps: 500
 force_limit: 10.0
 learning_rate: 0.0003
 total_timesteps: 100000
+model_path: models/single_link_ppo.zip
+run_dir: runs/single_link_ppo
+evaluation_episodes: 20
+ppo_n_steps: 256
+ppo_batch_size: 64
+ppo_n_epochs: 10
+ppo_gamma: 0.99
 reward_notes: "Reward upright balance, small cart movement, and longer survival."

@@ -1,4 +1,4 @@
-"""Render random actions placeholder.
+"""Run or render random actions in the single-link cartpole.
 
 Random-action rendering is useful before training because it verifies that the environment
 dynamics and visualization are understandable.
@@ -8,11 +8,10 @@ from __future__ import annotations
 
 from argparse import ArgumentParser
 
-from multi_link_cartpole_rl.envs.single_link_cartpole import (
-    SingleLinkCartPoleConfig,
-    SingleLinkCartPoleEnv,
+from multi_link_cartpole_rl.utils.experiment import (
+    load_single_link_experiment_config,
+    make_single_link_env,
 )
-from multi_link_cartpole_rl.utils.config import load_yaml_config
 
 
 def build_parser() -> ArgumentParser:
@@ -29,26 +28,15 @@ def build_parser() -> ArgumentParser:
     return parser
 
 
-def build_single_link_config(config_path: str) -> SingleLinkCartPoleConfig:
-    """Load the YAML fields currently used by the single-link environment."""
-    data = load_yaml_config(config_path)
-    if data.get("num_links") != 1:
-        raise NotImplementedError("Milestone 1A only supports num_links: 1.")
-
-    return SingleLinkCartPoleConfig(
-        max_episode_steps=int(data.get("max_episode_steps", 500)),
-        force_limit=float(data.get("force_limit", 10.0)),
-    )
-
-
 def main() -> None:
     """Run one random-action episode in the single-link cartpole environment."""
     args = build_parser().parse_args()
-    config = build_single_link_config(args.config)
-    env = SingleLinkCartPoleEnv(
-        config=config,
+    experiment_config = load_single_link_experiment_config(args.config)
+    env = make_single_link_env(
+        experiment_config,
         render_mode="human" if args.render else None,
     )
+    env.action_space.seed(args.seed)
 
     observation, info = env.reset(seed=args.seed)
     total_reward = 0.0

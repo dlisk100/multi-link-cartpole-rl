@@ -22,9 +22,9 @@ large framework.
 
 - [ ] Understand the Gymnasium environment API
 - [x] Run random actions in a single-link cartpole
-- [ ] Train PPO on single-link cartpole
-- [ ] Render a trained single-link policy
-- [ ] Add logging for reward and episode length
+- [x] Train PPO on single-link cartpole
+- [x] Render a trained single-link policy
+- [x] Add logging for reward and episode length
 - [ ] Generalize the environment to multiple links
 - [ ] Train two-link cartpole
 - [ ] Train three-link cartpole
@@ -77,6 +77,25 @@ Manual controls:
 - Press `R` to reset
 - Press `Q` to quit
 
+Milestone 1B adds the first real PPO learning loop for single-link stabilization. Train a
+policy:
+
+```bash
+uv run python scripts/train.py --config configs/single_link.yaml --seed 1
+```
+
+Compare random actions against the trained policy:
+
+```bash
+uv run python scripts/evaluate.py --config configs/single_link.yaml --model-path models/single_link_ppo.zip --episodes 20 --seed 1
+```
+
+Watch the trained policy:
+
+```bash
+uv run python scripts/render_policy.py --config configs/single_link.yaml --model-path models/single_link_ppo.zip --seed 1
+```
+
 ## Milestone 2: two-link cartpole
 
 Extend the system to two linked pendulums. This milestone should reveal what must change in
@@ -112,18 +131,20 @@ environment is still a placeholder. The intended direction is:
 
 ## Training approach
 
-Training will begin with PPO from Stable-Baselines3 because it is widely used, documented,
-and suitable for continuous-control learning experiments. The first training script will
-load a YAML config, create the environment, train PPO, and save checkpoints.
+Training now begins with PPO from Stable-Baselines3 because it is widely used, documented,
+and suitable for continuous-control learning experiments. The training script loads a YAML
+config, creates the single-link environment, writes Monitor logs under `runs/`, and saves
+the model under `models/`.
 
 ## Rendering/demo plan
 
-Rendering will start with random actions so the environment can be visually inspected before
-training. Later milestones will render trained policies and save videos or GIFs for demos.
+Rendering starts with random actions so the environment can be visually inspected before
+training. A trained PPO policy can also be replayed in the same Matplotlib viewer. Later
+milestones can add saved videos or GIFs for demos.
 
 ## Current status
 
-Milestone 1A is complete. The project now has a minimal single-link Gymnasium environment
-with continuous cart-force actions, simple cartpole dynamics, shaped rewards, and a
-random-action runner. Graphical rendering, PPO training, and multi-link dynamics are still
-future milestones.
+Milestone 1B is complete. The project now has a minimal single-link Gymnasium environment
+with continuous cart-force actions, simple cartpole dynamics, shaped rewards, random-action
+and manual-control runners, PPO training, policy evaluation, and graphical trained-policy
+playback. Multi-link dynamics and swing-up remain future milestones.
