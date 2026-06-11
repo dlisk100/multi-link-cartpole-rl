@@ -96,6 +96,35 @@ Watch the trained policy:
 uv run python scripts/render_policy.py --config configs/single_link.yaml --model-path models/single_link_ppo.zip --seed 1
 ```
 
+Milestone 1C turns that result into reproducible portfolio evidence. Write an evaluation
+report:
+
+```bash
+uv run python scripts/evaluate.py \
+  --config configs/single_link.yaml \
+  --model-path models/single_link_ppo.zip \
+  --episodes 20 \
+  --seed 1 \
+  --output runs/single_link_ppo/evaluation.json
+```
+
+Generate static result plots:
+
+```bash
+uv run python scripts/plot_results.py \
+  --run-dir runs/single_link_ppo \
+  --evaluation runs/single_link_ppo/evaluation.json
+```
+
+These commands generate ignored run artifacts:
+
+```text
+runs/single_link_ppo/evaluation.json
+runs/single_link_ppo/run_summary.json
+runs/single_link_ppo/training_curve.png
+runs/single_link_ppo/random_vs_ppo.png
+```
+
 ## Milestone 2: two-link cartpole
 
 Extend the system to two linked pendulums. This milestone should reveal what must change in
@@ -134,7 +163,8 @@ environment is still a placeholder. The intended direction is:
 Training now begins with PPO from Stable-Baselines3 because it is widely used, documented,
 and suitable for continuous-control learning experiments. The training script loads a YAML
 config, creates the single-link environment, writes Monitor logs under `runs/`, and saves
-the model under `models/`.
+the model under `models/`. Evaluation can also write a JSON report for reproducible
+comparison between random actions and the trained policy.
 
 ## Rendering/demo plan
 
@@ -144,7 +174,8 @@ milestones can add saved videos or GIFs for demos.
 
 ## Current status
 
-Milestone 1B is complete. The project now has a minimal single-link Gymnasium environment
+Milestone 1C is complete. The project now has a minimal single-link Gymnasium environment
 with continuous cart-force actions, simple cartpole dynamics, shaped rewards, random-action
 and manual-control runners, PPO training, policy evaluation, and graphical trained-policy
-playback. Multi-link dynamics and swing-up remain future milestones.
+playback. It also has lightweight JSON reporting and static plots for portfolio-ready
+evidence. Multi-link dynamics and swing-up remain future milestones.

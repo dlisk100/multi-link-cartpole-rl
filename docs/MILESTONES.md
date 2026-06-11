@@ -45,81 +45,63 @@ uv run python scripts/render_random.py --config configs/single_link.yaml --steps
 Risks / traps: Overbuilding multi-link abstractions too early; hiding dynamics in unclear
 helpers; confusing terminated with truncated.
 
-## Milestone 1B: Render Random Single-Link Behavior
+## Milestone 1B: Train, Evaluate, And Render Single-Link PPO
 
-Goal: Render random single-link behavior so physics can be visually inspected.
-
-Concept learned: Visual debugging, coordinate transforms, render modes, and why seeing
-dynamics matters before training.
-
-Files likely touched: `src/multi_link_cartpole_rl/envs/single_link_cartpole.py`,
-`src/multi_link_cartpole_rl/rendering/render_random.py`, `scripts/render_random.py`,
-`tests/test_single_link_cartpole.py`, `README.md`.
-
-Done means: `render_mode="human"` displays a live view and `render_mode="rgb_array"`
-returns image arrays suitable for tests and future video export.
-
-How to validate:
-
-```bash
-uv run pytest
-uv run ruff check .
-uv run python scripts/render_random.py --config configs/single_link.yaml --steps 100 --seed 1 --render
-```
-
-Risks / traps: Making rendering drive environment state directly; requiring a display for
-all tests; polishing visuals before the physics are understandable.
-
-## Milestone 1C: Train PPO On Single-Link Cartpole
-
-Goal: Train a first PPO policy on the single-link environment.
+Goal: Train a first PPO policy on the single-link stabilization task, compare it with
+random actions, and render the trained behavior.
 
 Concept learned: How an RL library wraps an environment, samples rollouts, optimizes a
-policy, logs progress, and saves checkpoints.
+policy, saves checkpoints, evaluates deterministically, and supports visual inspection.
 
-Files likely touched: `src/multi_link_cartpole_rl/training/train_ppo.py`,
-`scripts/train.py`, `configs/single_link.yaml`, `src/multi_link_cartpole_rl/utils/config.py`,
+Files likely touched: `src/multi_link_cartpole_rl/training/`,
+`src/multi_link_cartpole_rl/rendering/`, `src/multi_link_cartpole_rl/utils/experiment.py`,
+`configs/single_link.yaml`, `tests/`, `README.md`.
+
+Done means: PPO training saves a checkpoint, evaluation shows trained PPO surviving longer
+than random actions, and graphical playback shows stable control.
+
+How to validate:
+
+```bash
+uv run pytest
+uv run ruff check .
+uv run python scripts/train.py --config configs/single_link.yaml --seed 1
+uv run python scripts/evaluate.py --config configs/single_link.yaml --model-path models/single_link_ppo.zip --episodes 20 --seed 1
+uv run python scripts/render_policy.py --config configs/single_link.yaml --model-path models/single_link_ppo.zip --seed 1
+```
+
+Risks / traps: Overinterpreting one lucky episode; requiring committed local checkpoints in
+tests; changing task difficulty while judging PPO quality.
+
+## Milestone 1C: Portfolio-Ready Metrics And Reproducible Evidence
+
+Goal: Package the solved single-link PPO result into reproducible metrics and plots.
+
+Concept learned: Experiment evidence, run artifacts, machine-readable metrics, and
+portfolio-friendly result communication.
+
+Files likely touched: `src/multi_link_cartpole_rl/training/`, `scripts/plot_results.py`,
 `tests/`, `README.md`.
 
-Done means: A short training run starts from config, trains without crashing, saves a model
-checkpoint, and documents the command used.
+Done means: Evaluation can write a JSON report, training/evaluation plots can be generated
+from ignored run artifacts, and README documents the exact reproduction commands.
 
 How to validate:
 
 ```bash
 uv run pytest
 uv run ruff check .
-uv run python scripts/train.py --config configs/single_link.yaml --total-timesteps 1000
+uv run python scripts/evaluate.py --config configs/single_link.yaml --model-path models/single_link_ppo.zip --episodes 20 --seed 1 --output runs/single_link_ppo/evaluation.json
+uv run python scripts/plot_results.py --run-dir runs/single_link_ppo --evaluation runs/single_link_ppo/evaluation.json
 ```
 
-Risks / traps: Treating first training quality as the main milestone; adding many logging
-tools before a checkpoint can be trained; long default training runs.
+Risks / traps: Building a full experiment tracker; committing large generated artifacts;
+making portfolio plots before the metrics are reproducible.
 
-## Milestone 1D: Evaluate And Render Trained Single-Link Policy
+## Historical Milestone 1D: Folded Into 1B
 
-Goal: Load a trained single-link checkpoint, evaluate it, and render policy behavior.
-
-Concept learned: Separating training from evaluation, deterministic rollouts, and visual
-inspection of learned control.
-
-Files likely touched: `src/multi_link_cartpole_rl/training/evaluate_policy.py`,
-`src/multi_link_cartpole_rl/rendering/render_policy.py`, `scripts/evaluate.py`,
-`scripts/render_policy.py`, `README.md`, `tests/`.
-
-Done means: A saved model can be loaded, evaluated for one or more episodes, and rendered
-without retraining.
-
-How to validate:
-
-```bash
-uv run pytest
-uv run ruff check .
-uv run python scripts/evaluate.py --config configs/single_link.yaml --model-path <checkpoint>
-uv run python scripts/render_policy.py --config configs/single_link.yaml --model-path <checkpoint>
-```
-
-Risks / traps: Mixing evaluation into training scripts; requiring a specific local
-checkpoint path in tests; overinterpreting one lucky episode.
+Evaluation and graphical playback were completed as part of Milestone 1B. Keep this note so
+older thread plans that mention 1D can be mapped to the current repo state.
 
 ## Milestone 2A: Clean Up Metrics, Logging, And Configs
 

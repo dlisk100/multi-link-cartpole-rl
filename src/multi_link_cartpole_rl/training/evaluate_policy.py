@@ -10,6 +10,7 @@ from typing import Protocol
 import numpy as np
 
 from multi_link_cartpole_rl.envs.single_link_cartpole import SingleLinkCartPoleEnv
+from multi_link_cartpole_rl.training.reporting import write_json_report
 from multi_link_cartpole_rl.utils.experiment import (
     load_single_link_experiment_config,
     make_single_link_env,
@@ -52,6 +53,18 @@ class EvaluationStats:
         """Return the longest episode."""
         return max(self.episode_lengths)
 
+    def to_dict(self) -> dict[str, object]:
+        """Serialize summary and raw episode values for reports."""
+        return {
+            "label": self.label,
+            "episode_lengths": self.episode_lengths,
+            "episode_returns": self.episode_returns,
+            "mean_episode_length": self.mean_episode_length,
+            "mean_return": self.mean_return,
+            "return_std": self.return_std,
+            "best_episode_length": self.best_episode_length,
+        }
+
 
 def build_parser() -> ArgumentParser:
     """Create the command-line parser for future policy evaluation."""
@@ -60,6 +73,11 @@ def build_parser() -> ArgumentParser:
     parser.add_argument("--model-path", default=None)
     parser.add_argument("--episodes", type=int, default=None)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--output",
+        default=None,
+        help="Optional path for a machine-readable JSON evaluation report.",
+    )
     return parser
 
 
@@ -167,6 +185,37 @@ def evaluate_policies(
     return random_stats, trained_stats
 
 
+def build_evaluation_report(
+    *,
+    random_stats: EvaluationStats,
+    trained_stats: EvaluationStats,
+    config_path: str,
+    model_path: str | None,
+    episodes: int | None,
+    seed: int,
+) -> dict[str, object]:
+    """Build a machine-readable evaluation report."""
+    experiment_config = load_single_link_experiment_config(config_path)
+    resolved_model_path = (
+        Path(model_path) if model_path is not None else experiment_config.model_path
+    )
+    resolved_episodes = (
+        episodes if episodes is not None else experiment_config.evaluation_episodes
+    )
+
+    return {
+        "task": "single_link_stabilization",
+        "config_path": config_path,
+        "model_path": str(resolved_model_path),
+        "episodes": resolved_episodes,
+        "seed": seed,
+        "policies": {
+            "random": random_stats.to_dict(),
+            "trained_ppo": trained_stats.to_dict(),
+        },
+    }
+
+
 def main() -> None:
     """Evaluation entry point."""
     args = build_parser().parse_args()
@@ -179,6 +228,18 @@ def main() -> None:
     print("Policy evaluation finished:")
     print(format_stats(random_stats))
     print(format_stats(trained_stats))
+
+    if args.output is not None:
+        report = build_evaluation_report(
+            random_stats=random_stats,
+            trained_stats=trained_stats,
+            config_path=args.config,
+            model_path=args.model_path,
+            episodes=args.episodes,
+            seed=args.seed,
+        )
+        output_path = write_json_report(args.output, report)
+        print(f"Wrote evaluation report: {output_path}")
 
 
 if __name__ == "__main__":

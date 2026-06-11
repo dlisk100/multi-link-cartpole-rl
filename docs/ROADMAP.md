@@ -15,20 +15,19 @@ shared plan for how Codex threads should work.
 Create or audit the single-link Gymnasium environment. Confirm `reset` and `step` return the
 right shapes and metadata. Run random actions without graphical rendering.
 
-## Milestone 1B: Render Random Single-Link Behavior
+## Milestone 1B: Train, Evaluate, And Render Single-Link PPO
 
-Add simple rendering for the single-link environment so the dynamics can be inspected by
-eye before training.
+Train a first Stable-Baselines3 PPO policy on the single-link stabilization task. Evaluate
+it against random actions and render the trained policy for visual inspection.
 
-## Milestone 1C: Train PPO On Single-Link Cartpole
+## Milestone 1C: Portfolio-Ready Metrics And Reproducible Evidence
 
-Train a first Stable-Baselines3 PPO policy on the single-link environment. Keep the training
-loop minimal and readable.
+Package the solved single-link PPO result into JSON metrics and static plots. Keep generated
+artifacts ignored, but make the improvement over random policy easy to reproduce.
 
-## Milestone 1D: Evaluate And Render Trained Single-Link Policy
+## Historical Milestone 1D: Folded Into 1B
 
-Load a trained checkpoint, evaluate it deterministically, and render policy behavior for
-inspection.
+Evaluation and trained-policy rendering were completed as part of Milestone 1B.
 
 ## Milestone 2A: Clean Up Metrics, Logging, And Configs
 
