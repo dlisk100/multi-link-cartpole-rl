@@ -38,6 +38,7 @@ def load_single_link_experiment_config(config_path: str | Path) -> SingleLinkExp
 
     default_env = SingleLinkCartPoleConfig()
     env_config = SingleLinkCartPoleConfig(
+        task=str(data.get("task", default_env.task)),
         num_links=int(data.get("num_links", default_env.num_links)),
         max_episode_steps=int(data.get("max_episode_steps", default_env.max_episode_steps)),
         force_limit=float(data.get("force_limit", default_env.force_limit)),
@@ -54,6 +55,30 @@ def load_single_link_experiment_config(config_path: str | Path) -> SingleLinkExp
         time_step=float(data.get("time_step", default_env.time_step)),
         initial_state_noise=float(
             data.get("initial_state_noise", default_env.initial_state_noise)
+        ),
+        swingup_initial_angle_noise=float(
+            data.get(
+                "swingup_initial_angle_noise",
+                default_env.swingup_initial_angle_noise,
+            )
+        ),
+        swingup_initial_velocity_noise=float(
+            data.get(
+                "swingup_initial_velocity_noise",
+                default_env.swingup_initial_velocity_noise,
+            )
+        ),
+        upright_angle_threshold=float(
+            data.get("upright_angle_threshold", default_env.upright_angle_threshold)
+        ),
+        upright_angular_velocity_threshold=float(
+            data.get(
+                "upright_angular_velocity_threshold",
+                default_env.upright_angular_velocity_threshold,
+            )
+        ),
+        swingup_success_steps=int(
+            data.get("swingup_success_steps", default_env.swingup_success_steps)
         ),
     )
 

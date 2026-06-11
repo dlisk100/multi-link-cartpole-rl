@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from argparse import ArgumentParser
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
 
 import numpy as np
 
@@ -32,6 +32,8 @@ class EvaluationStats:
     label: str
     episode_lengths: list[int]
     episode_returns: list[float]
+    swingup_successes: list[bool] = field(default_factory=list)
+    max_consecutive_upright_steps: list[int] = field(default_factory=list)
 
     @property
     def mean_episode_length(self) -> float:
@@ -53,9 +55,23 @@ class EvaluationStats:
         """Return the longest episode."""
         return max(self.episode_lengths)
 
+    @property
+    def swingup_success_rate(self) -> float | None:
+        """Return swing-up success rate when swing-up metrics are present."""
+        if not self.swingup_successes:
+            return None
+        return float(np.mean(self.swingup_successes))
+
+    @property
+    def mean_max_consecutive_upright_steps(self) -> float | None:
+        """Return mean max consecutive upright steps when present."""
+        if not self.max_consecutive_upright_steps:
+            return None
+        return float(np.mean(self.max_consecutive_upright_steps))
+
     def to_dict(self) -> dict[str, object]:
         """Serialize summary and raw episode values for reports."""
-        return {
+        payload: dict[str, object] = {
             "label": self.label,
             "episode_lengths": self.episode_lengths,
             "episode_returns": self.episode_returns,
@@ -64,6 +80,17 @@ class EvaluationStats:
             "return_std": self.return_std,
             "best_episode_length": self.best_episode_length,
         }
+        if self.swingup_success_rate is not None:
+            payload["swingup_successes"] = self.swingup_successes
+            payload["swingup_success_rate"] = self.swingup_success_rate
+        if self.mean_max_consecutive_upright_steps is not None:
+            payload["max_consecutive_upright_steps"] = (
+                self.max_consecutive_upright_steps
+            )
+            payload["mean_max_consecutive_upright_steps"] = (
+                self.mean_max_consecutive_upright_steps
+            )
+        return payload
 
 
 def build_parser() -> ArgumentParser:
@@ -95,6 +122,8 @@ def run_policy_episodes(
 
     episode_lengths: list[int] = []
     episode_returns: list[float] = []
+    swingup_successes: list[bool] = []
+    max_consecutive_upright_steps: list[int] = []
     env.action_space.seed(seed)
 
     for episode_index in range(episodes):
@@ -102,31 +131,47 @@ def run_policy_episodes(
         total_reward = 0.0
         terminated = False
         truncated = False
+        info: dict[str, Any] = {}
 
         while not terminated and not truncated:
             action = policy(observation, env)
-            observation, reward, terminated, truncated, _ = env.step(action)
+            observation, reward, terminated, truncated, info = env.step(action)
             total_reward += reward
 
         episode_lengths.append(env.steps)
         episode_returns.append(total_reward)
+        if env.config.task == "swing_up":
+            swingup_successes.append(bool(info.get("swingup_success", False)))
+            max_consecutive_upright_steps.append(
+                int(info.get("max_consecutive_upright_steps", 0))
+            )
 
     return EvaluationStats(
         label=label,
         episode_lengths=episode_lengths,
         episode_returns=episode_returns,
+        swingup_successes=swingup_successes,
+        max_consecutive_upright_steps=max_consecutive_upright_steps,
     )
 
 
 def format_stats(stats: EvaluationStats) -> str:
     """Format evaluation statistics for the command-line report."""
-    return (
+    formatted = (
         f"{stats.label}: "
         f"mean_episode_length={stats.mean_episode_length:.1f}, "
         f"mean_return={stats.mean_return:.2f}, "
         f"return_std={stats.return_std:.2f}, "
         f"best_episode_length={stats.best_episode_length}"
     )
+    if stats.swingup_success_rate is not None:
+        formatted += f", swingup_success_rate={stats.swingup_success_rate:.2f}"
+    if stats.mean_max_consecutive_upright_steps is not None:
+        formatted += (
+            ", mean_max_consecutive_upright_steps="
+            f"{stats.mean_max_consecutive_upright_steps:.1f}"
+        )
+    return formatted
 
 
 def evaluate_policies(
@@ -202,9 +247,13 @@ def build_evaluation_report(
     resolved_episodes = (
         episodes if episodes is not None else experiment_config.evaluation_episodes
     )
+    task_name = experiment_config.env_config.task
+    report_task = (
+        "single_link_stabilization" if task_name == "stabilization" else task_name
+    )
 
     return {
-        "task": "single_link_stabilization",
+        "task": report_task,
         "config_path": config_path,
         "model_path": str(resolved_model_path),
         "episodes": resolved_episodes,

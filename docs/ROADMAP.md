@@ -25,9 +25,10 @@ it against random actions and render the trained policy for visual inspection.
 Package the solved single-link PPO result into JSON metrics and static plots. Keep generated
 artifacts ignored, but make the improvement over random policy easy to reproduce.
 
-## Historical Milestone 1D: Folded Into 1B
+## Milestone 1D: Single-Link Swing-Up
 
-Evaluation and trained-policy rendering were completed as part of Milestone 1B.
+Add a downward-start single-link swing-up task. Train PPO to swing the pole upright and
+stabilize it before moving the same idea toward multi-link swing-up.
 
 ## Milestone 2A: Clean Up Metrics, Logging, And Configs
 

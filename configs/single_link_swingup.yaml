@@ -1,0 +1,22 @@
+env_name: SingleLinkCartPole
+task: swing_up
+num_links: 1
+max_episode_steps: 1000
+force_limit: 15.0
+cart_position_limit: 2.4
+initial_state_noise: 0.02
+swingup_initial_angle_noise: 0.05
+swingup_initial_velocity_noise: 0.05
+upright_angle_threshold: 0.20943951023931953
+upright_angular_velocity_threshold: 1.0
+swingup_success_steps: 300
+learning_rate: 0.0003
+total_timesteps: 1000000
+model_path: models/single_link_swingup_ppo.zip
+run_dir: runs/single_link_swingup_ppo
+evaluation_episodes: 20
+ppo_n_steps: 512
+ppo_batch_size: 128
+ppo_n_epochs: 10
+ppo_gamma: 0.995
+reward_notes: "Reward swing-up from downward start, upright capture, centered cart, and low effort."

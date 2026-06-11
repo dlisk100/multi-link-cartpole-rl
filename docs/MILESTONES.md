@@ -98,10 +98,34 @@ uv run python scripts/plot_results.py --run-dir runs/single_link_ppo --evaluatio
 Risks / traps: Building a full experiment tracker; committing large generated artifacts;
 making portfolio plots before the metrics are reproducible.
 
-## Historical Milestone 1D: Folded Into 1B
+## Milestone 1D: Single-Link Swing-Up
 
-Evaluation and graphical playback were completed as part of Milestone 1B. Keep this note so
-older thread plans that mention 1D can be mapped to the current repo state.
+Goal: Add a downward-start single-link swing-up task and train PPO to swing up and stabilize
+near upright.
+
+Concept learned: Full-rotation observations, wrapped angle rewards, swing-up-specific
+metrics, and why swing-up is harder than upright stabilization.
+
+Files likely touched: `src/multi_link_cartpole_rl/envs/single_link_cartpole.py`,
+`src/multi_link_cartpole_rl/training/evaluate_policy.py`,
+`configs/single_link_swingup.yaml`, `tests/`, `README.md`.
+
+Done means: The stabilization baseline still passes, swing-up starts near downward,
+evaluation reports success rate and consecutive upright steps, and PPO can solve the
+single-link swing-up task by the documented criteria.
+
+How to validate:
+
+```bash
+uv run pytest
+uv run ruff check .
+uv run python scripts/train.py --config configs/single_link_swingup.yaml --seed 1
+uv run python scripts/evaluate.py --config configs/single_link_swingup.yaml --model-path models/single_link_swingup_ppo.zip --episodes 20 --seed 1 --output runs/single_link_swingup_ppo/evaluation.json
+uv run python scripts/render_policy.py --config configs/single_link_swingup.yaml --model-path models/single_link_swingup_ppo.zip --seed 1
+```
+
+Risks / traps: Regressing the solved stabilization task; using raw angles across the
+wraparound boundary; treating long episodes as solved without checking upright capture.
 
 ## Milestone 2A: Clean Up Metrics, Logging, And Configs
 

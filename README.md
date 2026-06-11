@@ -125,6 +125,43 @@ runs/single_link_ppo/training_curve.png
 runs/single_link_ppo/random_vs_ppo.png
 ```
 
+The next single-link task is swing-up. This starts the pole hanging downward, allows full
+rotation, and asks PPO to swing the pole upright and stabilize it.
+
+Train the swing-up policy:
+
+```bash
+uv run python scripts/train.py --config configs/single_link_swingup.yaml --seed 1
+```
+
+Evaluate swing-up success:
+
+```bash
+uv run python scripts/evaluate.py \
+  --config configs/single_link_swingup.yaml \
+  --model-path models/single_link_swingup_ppo.zip \
+  --episodes 20 \
+  --seed 1 \
+  --output runs/single_link_swingup_ppo/evaluation.json
+```
+
+Watch swing-up playback:
+
+```bash
+uv run python scripts/render_policy.py \
+  --config configs/single_link_swingup.yaml \
+  --model-path models/single_link_swingup_ppo.zip \
+  --seed 1
+```
+
+Generate swing-up plots:
+
+```bash
+uv run python scripts/plot_results.py \
+  --run-dir runs/single_link_swingup_ppo \
+  --evaluation runs/single_link_swingup_ppo/evaluation.json
+```
+
 ## Milestone 2: two-link cartpole
 
 Extend the system to two linked pendulums. This milestone should reveal what must change in
@@ -178,4 +215,6 @@ Milestone 1C is complete. The project now has a minimal single-link Gymnasium en
 with continuous cart-force actions, simple cartpole dynamics, shaped rewards, random-action
 and manual-control runners, PPO training, policy evaluation, and graphical trained-policy
 playback. It also has lightweight JSON reporting and static plots for portfolio-ready
-evidence. Multi-link dynamics and swing-up remain future milestones.
+evidence. The current swing-up work adds a separate downward-start single-link task with
+full-rotation observations and swing-up-specific evaluation metrics. Multi-link dynamics
+remain a future milestone.

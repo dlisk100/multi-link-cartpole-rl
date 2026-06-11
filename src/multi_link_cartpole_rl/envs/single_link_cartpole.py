@@ -17,7 +17,7 @@ Action:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import cos, degrees, pi, sin
+from math import cos, degrees, exp, pi, sin
 from typing import Any
 
 import gymnasium as gym
@@ -25,10 +25,16 @@ import numpy as np
 from gymnasium import spaces
 
 
+def wrap_angle_radians(angle: float) -> float:
+    """Wrap an angle to the range [-pi, pi)."""
+    return (angle + pi) % (2.0 * pi) - pi
+
+
 @dataclass(frozen=True)
 class SingleLinkCartPoleConfig:
     """Readable parameters for the first environment milestone."""
 
+    task: str = "stabilization"
     num_links: int = 1
     max_episode_steps: int = 500
     force_limit: float = 10.0
@@ -40,6 +46,11 @@ class SingleLinkCartPoleConfig:
     pole_half_length: float = 0.5
     time_step: float = 0.02
     initial_state_noise: float = 0.05
+    swingup_initial_angle_noise: float = 0.05
+    swingup_initial_velocity_noise: float = 0.05
+    upright_angle_threshold: float = 12.0 * 2.0 * pi / 360.0
+    upright_angular_velocity_threshold: float = 1.0
+    swingup_success_steps: int = 300
 
 
 class SingleLinkCartPoleEnv(gym.Env):
@@ -67,6 +78,8 @@ class SingleLinkCartPoleEnv(gym.Env):
         self.render_mode = render_mode
         self.state: np.ndarray | None = None
         self.steps = 0
+        self.upright_steps = 0
+        self.max_consecutive_upright_steps = 0
         self._fig: Any | None = None
         self._ax: Any | None = None
         self._canvas: Any | None = None
@@ -78,18 +91,32 @@ class SingleLinkCartPoleEnv(gym.Env):
 
         if self.config.num_links != 1:
             raise ValueError("SingleLinkCartPoleEnv requires num_links=1.")
+        if self.config.task not in {"stabilization", "swing_up"}:
+            raise ValueError(f"Unsupported single-link task: {self.config.task}")
         if render_mode is not None and render_mode not in self.metadata["render_modes"]:
             raise ValueError(f"Unsupported render_mode: {render_mode}")
 
-        observation_high = np.array(
-            [
-                self.config.cart_position_limit * 2.0,
-                np.inf,
-                self.config.angle_limit_radians * 2.0,
-                np.inf,
-            ],
-            dtype=np.float32,
-        )
+        if self.config.task == "swing_up":
+            observation_high = np.array(
+                [
+                    self.config.cart_position_limit * 2.0,
+                    np.inf,
+                    1.0,
+                    1.0,
+                    np.inf,
+                ],
+                dtype=np.float32,
+            )
+        else:
+            observation_high = np.array(
+                [
+                    self.config.cart_position_limit * 2.0,
+                    np.inf,
+                    self.config.angle_limit_radians * 2.0,
+                    np.inf,
+                ],
+                dtype=np.float32,
+            )
         self.observation_space = spaces.Box(
             low=-observation_high,
             high=observation_high,
@@ -114,18 +141,39 @@ class SingleLinkCartPoleEnv(gym.Env):
         """
         super().reset(seed=seed)
         self.steps = 0
+        self.upright_steps = 0
+        self.max_consecutive_upright_steps = 0
 
         if options is not None and "state" in options:
             state = np.asarray(options["state"], dtype=np.float32)
             if state.shape != (4,):
                 raise ValueError("reset option 'state' must have shape (4,).")
             self.state = state
+            self._update_upright_metrics()
+        elif self.config.task == "swing_up":
+            angle_low = pi - self.config.swingup_initial_angle_noise
+            angle_high = pi + self.config.swingup_initial_angle_noise
+            velocity_noise = self.config.swingup_initial_velocity_noise
+            self.state = np.array(
+                [
+                    self.np_random.uniform(
+                        -self.config.initial_state_noise,
+                        self.config.initial_state_noise,
+                    ),
+                    self.np_random.uniform(-velocity_noise, velocity_noise),
+                    self.np_random.uniform(angle_low, angle_high),
+                    self.np_random.uniform(-velocity_noise, velocity_noise),
+                ],
+                dtype=np.float32,
+            )
+            self._update_upright_metrics()
         else:
             low = -self.config.initial_state_noise
             high = self.config.initial_state_noise
             self.state = self.np_random.uniform(low=low, high=high, size=(4,)).astype(
                 np.float32
             )
+            self._update_upright_metrics()
 
         return self._get_obs(), self._get_info(applied_force=0.0)
 
@@ -161,6 +209,7 @@ class SingleLinkCartPoleEnv(gym.Env):
 
         self.state = np.array([x, x_dot, theta, theta_dot], dtype=np.float32)
         self.steps += 1
+        self._update_upright_metrics()
 
         terminated = self._is_out_of_bounds()
         truncated = self.steps >= self.config.max_episode_steps
@@ -226,6 +275,8 @@ class SingleLinkCartPoleEnv(gym.Env):
         x, _, theta, _ = self.state
         if abs(float(x)) > self.config.cart_position_limit:
             return "cart_position_limit"
+        if self.config.task == "swing_up":
+            return None
         if abs(float(theta)) > self.config.angle_limit_radians:
             return "pole_angle_limit"
         return None
@@ -242,6 +293,9 @@ class SingleLinkCartPoleEnv(gym.Env):
         if self.state is None:
             return 0.0
 
+        if self.config.task == "swing_up":
+            return self._compute_swingup_reward(force=force, terminated=terminated)
+
         x, _, theta, _ = self.state
         angle_fraction = float(theta) / self.config.angle_limit_radians
         position_fraction = float(x) / self.config.cart_position_limit
@@ -257,28 +311,121 @@ class SingleLinkCartPoleEnv(gym.Env):
 
         return float(reward)
 
+    def _compute_swingup_reward(self, *, force: float, terminated: bool) -> float:
+        """Reward swinging up and settling near the unstable upright equilibrium."""
+        if self.state is None:
+            return 0.0
+
+        x, x_dot, theta, theta_dot = self.state
+        angle_error = self._angle_error_radians()
+        upright_score = (cos(angle_error) + 1.0) / 2.0
+        settled_score = upright_score
+        settled_score *= exp(-((angle_error / self.config.upright_angle_threshold) ** 2))
+        settled_score *= exp(
+            -((float(theta_dot) / self.config.upright_angular_velocity_threshold) ** 2)
+        )
+        consecutive_bonus = min(
+            self.upright_steps / max(self.config.swingup_success_steps, 1),
+            1.0,
+        )
+        position_fraction = float(x) / self.config.cart_position_limit
+        velocity_fraction = float(x_dot) / max(self.config.force_limit, 1.0)
+        force_fraction = force / self.config.force_limit
+
+        reward = 1.5 * upright_score
+        reward += 5.0 * settled_score
+        reward += 2.0 * consecutive_bonus
+        reward -= 0.1 * position_fraction**2
+        reward -= 0.01 * velocity_fraction**2
+        reward -= 0.005 * force_fraction**2
+
+        if self._is_upright():
+            reward += 2.0
+        if self.upright_steps >= self.config.swingup_success_steps:
+            reward += 5.0
+        if terminated:
+            reward -= 10.0
+
+        return float(reward)
+
     def _get_obs(self) -> np.ndarray:
         """Return the current observation in the observation space dtype."""
         if self.state is None:
             raise RuntimeError("Environment state is not initialized.")
+        if self.config.task == "swing_up":
+            x, x_dot, theta, theta_dot = self.state
+            return np.array(
+                [
+                    x,
+                    x_dot,
+                    sin(float(theta)),
+                    cos(float(theta)),
+                    theta_dot,
+                ],
+                dtype=np.float32,
+            )
         return self.state.astype(np.float32)
 
     def _get_info(self, *, applied_force: float) -> dict[str, Any]:
         """Return debugging information that is useful while learning."""
         if self.state is None:
             return {}
-        return {
+        info = {
             "step": self.steps,
             "applied_force": applied_force,
             "failure_reason": self._failure_reason(),
             "angle_limit_degrees": degrees(self.config.angle_limit_radians),
-            "state_variables": [
+            "task": self.config.task,
+            "angle_error_radians": self._angle_error_radians(),
+            "is_upright": self._is_upright(),
+            "upright_steps": self.upright_steps,
+            "max_consecutive_upright_steps": self.max_consecutive_upright_steps,
+            "swingup_success": self.max_consecutive_upright_steps
+            >= self.config.swingup_success_steps,
+        }
+        if self.config.task == "swing_up":
+            info["state_variables"] = [
+                "cart_position",
+                "cart_velocity",
+                "sin_pole_angle",
+                "cos_pole_angle",
+                "pole_angular_velocity",
+            ]
+        else:
+            info["state_variables"] = [
                 "cart_position",
                 "cart_velocity",
                 "pole_angle",
                 "pole_angular_velocity",
-            ],
-        }
+            ]
+        return info
+
+    def _angle_error_radians(self) -> float:
+        """Return the wrapped angle error from upright."""
+        if self.state is None:
+            return 0.0
+        return wrap_angle_radians(float(self.state[2]))
+
+    def _is_upright(self) -> bool:
+        """Return whether the pole is near upright and moving slowly."""
+        if self.state is None:
+            return False
+        _, _, _, theta_dot = self.state
+        return (
+            abs(self._angle_error_radians()) <= self.config.upright_angle_threshold
+            and abs(float(theta_dot)) <= self.config.upright_angular_velocity_threshold
+        )
+
+    def _update_upright_metrics(self) -> None:
+        """Update consecutive upright counters for swing-up evaluation."""
+        if self._is_upright():
+            self.upright_steps += 1
+        else:
+            self.upright_steps = 0
+        self.max_consecutive_upright_steps = max(
+            self.max_consecutive_upright_steps,
+            self.upright_steps,
+        )
 
     def _ensure_render_artists(self) -> None:
         """Create Matplotlib artists the first time graphical rendering is requested."""
