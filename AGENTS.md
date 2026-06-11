@@ -2,13 +2,14 @@
 
 This is a learning-oriented reinforcement learning and controls project. The goal is to
 understand the mechanics of custom Gymnasium environments, training loops, rendering, and
-control intuition while progressing from a single-link cartpole toward a five-link demo.
+control intuition while progressing from a single-link cartpole toward a five-link demo,
+with six links or the highest feasible link count as a later stretch target.
 
 ## Working Style
 
 - Prefer simple, readable, well-documented code over clever abstractions.
-- Work milestone-by-milestone. Do not skip directly to five-link cartpole before the
-  single-link environment is understood, tested, trained, and rendered.
+- Work milestone-by-milestone. Do not skip directly to five-link or six-link cartpole before
+  the single-link environment is understood, tested, trained, and rendered.
 - Keep changes scoped to the current task.
 - Keep physics, training, rendering, configs, scripts, utilities, and tests separated.
 - Avoid adding heavy dependencies unless the implementation thread explains why they are
@@ -44,4 +45,3 @@ Run tests and lint when they are available and quick. If a check cannot be run, 
 - `scripts/`: thin command-line entrypoints.
 - `utils/`: small shared helpers only when duplication is real.
 - `tests/`: behavior checks for environment API, physics invariants, configs, and scripts.
-

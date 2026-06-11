@@ -3,6 +3,10 @@
 The repo should stay small, explicit, and pedagogical. Each area has a narrow job so future
 milestones can improve one layer at a time.
 
+The long-term direction is high-link cartpole control inspired by recent six-pendulum
+cartpole demos. Early architecture should not optimize for that target prematurely, but it
+should avoid choices that make five-link or six-link experiments impossible later.
+
 ## Intended Layout
 
 ```text
@@ -50,6 +54,13 @@ Does not belong here:
 - Environment physics.
 - Rendering-specific UI code.
 - Hard-coded experiment constants that should live in configs.
+
+Future escalation path:
+
+- Start with Stable-Baselines3 PPO for the first learning loop.
+- Add better metrics and sweep hygiene before changing RL stacks.
+- Consider PufferLib or a faster PPO implementation only after the Gymnasium/SB3 loop is
+  understood and wall-clock training throughput is the actual bottleneck.
 
 ## `rendering/`
 
@@ -130,4 +141,3 @@ Does not belong here:
 
 - Long PPO training jobs.
 - Tests that require a display unless guarded or skipped.
-

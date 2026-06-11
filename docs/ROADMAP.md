@@ -1,7 +1,9 @@
 # Roadmap
 
 The roadmap is staged so each milestone teaches one layer of the system before the next
-layer adds complexity.
+layer adds complexity. The practical proof-of-work target remains five links first. After
+that, the project can attempt six links or the highest feasible link count if the earlier
+milestones show that the environment, training loop, and experiment process are ready.
 
 ## Milestone 0: Repo Scaffold And Learning Plan
 
@@ -70,3 +72,15 @@ episodes, and cleaner evaluation.
 Run targeted sweeps, select a final policy, and produce demo assets plus a short technical
 writeup.
 
+## Stretch Milestone 7: Six-Link Or Highest Feasible Cartpole
+
+Attempt a six-link cartpole or another clearly justified high-link target. This milestone is
+not active until five-link hard mode has a working evaluation and rendering path.
+
+Likely work:
+
+- Revisit environment performance and vectorization.
+- Run broader hyperparameter and reward sweeps.
+- Consider PufferLib or another higher-throughput training stack if SB3 wall-clock time is
+  the limiting factor.
+- Produce a demo only after evaluating across seeds, not from one lucky rollout.

@@ -5,11 +5,16 @@
 `multi-link-cartpole-rl` is a staged reinforcement learning and controls project. It starts
 with a single-link cartpole, then gradually grows to two, three, and five linked pendulums.
 The final proof-of-work artifact is a clean demo of an RL policy balancing a five-link
-cartpole.
+cartpole, with six links or the highest feasible link count as a later stretch goal.
 
 The project is also a learning lab. Each milestone should make one part of the RL/control
 stack understandable: the Gymnasium API, state and action spaces, dynamics, reward shaping,
 rendering, PPO training, evaluation, metrics, and experiment design.
+
+The aspirational reference is the June 2026 six-pendulum cartpole demo shared by kache
+(@yacineMTB). Treat that as the north star, not the starting point: the project should work
+up to that kind of result by building the learning loop, training infrastructure, and
+experiment discipline one stage at a time.
 
 ## Why We Are Building It
 
@@ -29,6 +34,8 @@ Success means:
   tests.
 - A single-link cartpole that can be stepped, rendered, trained, evaluated, and explained.
 - A staged path from one link to two, three, and five links without losing clarity.
+- A later decision point for whether to push beyond five links to six links or another
+  feasible high-link target.
 - Reproducible commands for random rollouts, training, evaluation, and final demo rendering.
 - Learning notes and docs that help future implementation threads move without guessing.
 
@@ -37,9 +44,9 @@ learned while building it.
 
 ## Out Of Scope For Now
 
-- Jumping straight to a five-link environment before the single-link loop is solid.
+- Jumping straight to a five-link or six-link environment before the single-link loop is
+  solid.
 - Large framework rewrites or abstract simulation engines before they are justified.
 - Distributed training, GPU optimization, or high-throughput RL infrastructure.
 - PufferLib or other advanced RL stacks before the core Gymnasium/PPO loop works.
 - Private service integrations, API keys, remote training services, or secret handling.
-

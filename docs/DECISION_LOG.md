@@ -74,3 +74,19 @@ abstraction before the project needs it.
 
 Consequences: Revisit only after single-link and early multi-link training are working and
 the bottleneck is clearly environment throughput or parallel training.
+
+## ADR-0006: Treat Six-Link Cartpole As A Stretch Target
+
+Date: 2026-06-11
+
+Status: Accepted
+
+Decision: Keep five-link hard mode as the first major proof-of-work target, but explicitly
+allow six links or the highest feasible link count as a later stretch target.
+
+Context: The project owner is inspired by a June 2026 six-pendulum cartpole demo and wants
+to work toward similarly high-link balancing while learning the RL process.
+
+Consequences: Architecture should avoid dead ends that prevent high-link experiments later,
+but implementation threads should still move through single-link, two-link, three-link, and
+five-link milestones before attempting six-link work.

@@ -254,7 +254,8 @@ after selecting a policy.
 
 ## Milestone 6: Experiment Sweeps And Final Demo Assets
 
-Goal: Produce final comparison results and demo assets.
+Goal: Produce final comparison results and demo assets for the current highest reliable
+link count, expected to be five links before any stretch work.
 
 Concept learned: Experiment reporting and communicating control/RL results clearly.
 
@@ -269,3 +270,23 @@ environment where practical.
 Risks / traps: Running broad sweeps without a question; keeping large generated artifacts
 in git; overstating results.
 
+## Stretch Milestone 7: Six-Link Or Highest Feasible Cartpole
+
+Goal: Push beyond five links if the project has earned that complexity.
+
+Concept learned: Scaling RL experiments, throughput, curriculum design, and how training
+infrastructure choices become important only after the baseline loop works.
+
+Files likely touched: `envs/`, `training/`, `rendering/`, `configs/`, `scripts/`, `docs/`.
+
+Done means: The chosen high-link target has a documented environment config, training path,
+evaluation path, and demo render. The result is evaluated across seeds rather than selected
+from one lucky rollout.
+
+How to validate: Run tests and lint, then run the documented training/evaluation/rendering
+commands for the selected high-link target. For expensive runs, record exact commands,
+hardware assumptions, seeds, wall-clock time, and artifact paths.
+
+Risks / traps: Switching to a faster RL stack before knowing the bottleneck; treating a
+viral demo as the minimum acceptable outcome; doing broad sweeps without enough metrics to
+learn from failures.
