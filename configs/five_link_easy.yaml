@@ -1,0 +1,7 @@
+env_name: FiveLinkCartPoleEasy
+num_links: 5
+max_episode_steps: 1000
+force_limit: 20.0
+learning_rate: 0.0002
+total_timesteps: 1000000
+reward_notes: "Use forgiving starts and shaped rewards so early five-link progress is visible."

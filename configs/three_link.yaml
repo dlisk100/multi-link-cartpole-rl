@@ -1,0 +1,7 @@
+env_name: ThreeLinkCartPole
+num_links: 3
+max_episode_steps: 900
+force_limit: 15.0
+learning_rate: 0.0002
+total_timesteps: 600000
+reward_notes: "Reward stable stacking of three links with smooth cart control."

@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+build/
+dist/
+
+# uv and local Python versions
+.venv/
+.uv-cache/
+.python-version
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Test and lint caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Model checkpoints and experiment outputs
+checkpoints/
+models/
+runs/
+logs/
+wandb/
+tensorboard/
+
+# Rendered demos
+videos/
+gifs/
+media/
+*.mp4
+*.gif
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# macOS
+.DS_Store

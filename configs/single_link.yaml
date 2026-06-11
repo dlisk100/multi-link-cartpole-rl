@@ -1,0 +1,7 @@
+env_name: SingleLinkCartPole
+num_links: 1
+max_episode_steps: 500
+force_limit: 10.0
+learning_rate: 0.0003
+total_timesteps: 100000
+reward_notes: "Reward upright balance, small cart movement, and longer survival."
